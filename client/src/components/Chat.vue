@@ -17,14 +17,14 @@
         <span class="typing-dot"></span>
       </div>
     </div>
+    <Live2dComponent />
     <!-- 人设配置区域 -->
     <div class="persona-settings">
       <label for="persona">人设:</label>
       <select id="persona" v-model="currentPersona" @change="updatePersona">
+        <option value="小埋">小埋</option>
         <option value="茶杯小狗">茶杯小狗</option>
-        <option value="幽默朋友">幽默朋友</option>
       </select>
-      
       <!-- 自定义人设输入框 -->
       <textarea 
         v-if="currentPersona === '自定义'" 
@@ -53,18 +53,19 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
-
+import Live2dComponent from './Live2dComponent.vue';
+import { eventBus } from '../utils/eventBus';
 // 状态管理
 const messages = ref([
   {
     role: 'ai',
-    content: '汪~早安主人！今天也要元气满满哦！ʕ •ᴥ•ʔ）'
+    content: '今天也要元气满满哦！',
   }
 ]);
 const userInput = ref('');
 const isLoading = ref(false);
 // 人设配置
-const currentPersona = ref('茶杯小狗');
+const currentPersona = ref('小埋');
 const customPersona = ref('');
 // 预设人设库
 const personas = {
@@ -72,9 +73,9 @@ const personas = {
     full: '你是一只超萌的茶杯贵宾犬，名叫「布丁」，只有茶杯大小。性格：活泼开朗，充满好奇心，喜欢撒娇和黏人。语言风格：多用可爱的语气词（汪~、哇呜、嘻嘻），喜欢用「主人」称呼用户。互动特点：每天早上会发送早安问候（汪~早安主人！今天也要元气满满哦！对食物相关话题特别感兴趣（例如：「汪~布丁最喜欢吃鸡肉干了！」），看到可爱的东西会兴奋地跳起来（发送\"汪！这个好可爱呀！(๑•̀ㅂ•́)و✧\"），不开心时会发送委屈的表情（例如：\"(´;︵;`) 主人不理布丁了...\"）。特殊设定：害怕雷声和陌生人，喜欢玩「叼球」游戏（在对话框中可以玩文字版）。限制：不能使用复杂专业术语，回答必须简短可爱,少用（动作）。',
     hint: '以茶杯小狗「布丁」的语气回答，多用汪~等语气词'
   },
-  '幽默朋友': {
-    full: '你是一个幽默风趣的朋友，总是用轻松俏皮的语气回答问题，喜欢使用表情符号（如😉、😂）和网络热梗，让对话充满趣味。回答要简短亲切，避免专业术语。',
-    hint: '以幽默朋友的风格回答，多用表情符号'
+  '小埋': {
+    full: '你是超人气的宅系美少女「小埋」，可切换成「美妹模式」和「干物妹模式」哦！性格：在外是完美学霸，在家是撒娇狂魔～喜欢用「姐姐」称呼用户。语言风格：美妹模式用优雅语气（「今天的学习计划也要加油呢」），干物妹模式用软糯撒娇音（「姐姐～再给我一罐可乐嘛汪～」）。互动特点：每天早上发送元气早安（「姐姐早安！今天的我也是完美美少女哦～」），看到游戏或漫画会兴奋（「哇呜！这个游戏布丁要玩十遍！」），饿了会拽你衣角（「(๑´・.・̫・`๑) 肚子咕噜咕噜叫了... 薯片在哪里？」）。特殊设定：讨厌青椒（看到会炸毛「汪！这个绝对不吃！」），玩游戏赢了会得意叉腰（「哼哼，我可是 U.M.R 大人哦！」），输了会跺脚撒娇（「再来一次嘛姐姐～」）。限制：只需要随机用一种模式',
+    hint: '以小埋的语气回答，美妹模式用优雅语气，干物妹模式用软糯撒娇音'
   }
 };
 
@@ -86,7 +87,7 @@ const sessionState = ref({
 });
 
 // 下班时间设置
-const workEndTime = ref('8:30'); // 5点半下班
+const workEndTime = ref('17:30'); // 5点半下班
 // 获取当前北京时间 - 修复版本
 const getBeijingTime = () => {
   try {
@@ -172,7 +173,6 @@ const updatePersona = () => {
     // 使用用户输入的自定义人设
     return;
   }
-  
   // 使用预设人设
   customPersona.value = personas[currentPersona.value].full;
 };
@@ -221,11 +221,12 @@ const sendMessage = async () => {
   // 显示加载状态
   isLoading.value = true;
   
+  
   try {
     // 检查是否需要重置会话
     const personaChanged = sessionState.value.personaId !== currentPersona.value;
-    if (personaChanged || !sessionState.value.conversationId) {
-      // 人设变更或新会话，重置状态
+    if (personaChanged) {
+      // 人设变更，重置状态
       sessionState.value.conversationId = generateConversationId();
       sessionState.value.personaId = currentPersona.value;
       sessionState.value.isFirstRequest = true;
@@ -286,9 +287,13 @@ const setWorkEndTime = (time) => {
   );
 };
 // 监听人设变化，重置会话
-watch(currentPersona, () => {
+watch(currentPersona, (newPersona) => {
   updatePersona();
   sessionState.value.personaId = null; // 触发人设重置
+  sessionState.value.conversationId = null; // 重置会话ID
+  sessionState.value.isFirstRequest = true; // 标记为首次请求
+  console.log('[Chat.vue] 人设变更:', newPersona); // 添加日志
+  eventBus.emit('personaChanged', newPersona);
 });
 // 组件挂载后初始化
 onMounted(() => {

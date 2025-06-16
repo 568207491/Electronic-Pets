@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "axios": "^1.9.0",
+    "live2d-widget": "^3.1.4",
     "vue": "^3.5.13"
   },
   "devDependencies": {

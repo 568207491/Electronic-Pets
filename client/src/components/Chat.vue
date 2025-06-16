@@ -1,6 +1,6 @@
 <template>
   <div class="chat-container">
-    <div class="chat-messages" ref="messagesContainer">
+    <!-- <div class="chat-messages" ref="messagesContainer">
       <div 
         v-for="(message, index) in messages" 
         :key="index" 
@@ -16,8 +16,7 @@
         <span class="typing-dot"></span>
         <span class="typing-dot"></span>
       </div>
-    </div>
-    <Live2dComponent />
+    </div> -->
     <!-- 人设配置区域 -->
     <div class="persona-settings">
       <label for="persona">人设:</label>
@@ -33,6 +32,16 @@
         @input="updatePersona"
       ></textarea>
     </div>
+    <div 
+      v-for="(message, index) in messages" 
+      :key="index" 
+      :class="['message', message.role === 'user' ? 'user-message' : 'ai-message']"
+    >
+      <div class="message-content">
+        <p>{{ message.content }}</p>
+      </div>
+    </div>
+    <Live2dComponent />
     <div class="chat-input">
       <form @submit.prevent="sendMessage">
         <input
@@ -197,9 +206,9 @@ const sendMessage = async () => {
     
     let reply = '';
     if (userMsg.includes('下班')) {
-      reply = `汪~现在是北京时间${timeInfo}，${timeUntilEnd.formatted}`;
+      reply = `现在是北京时间${timeInfo}，${timeUntilEnd.formatted}`;
     } else {
-      reply = `汪~现在是北京时间${timeInfo}哦！ʕ •ᴥ•ʔ`;
+      reply = `现在是北京时间${timeInfo}哦！`;
     }
     
     // 直接添加回复，不调用API
@@ -282,7 +291,7 @@ const setWorkEndTime = (time) => {
   messages.value.push(
     { 
       role: 'ai', 
-      content: `汪~记住啦！主人的下班时间是${time}哦！(๑•̀ㅂ•́)و✧` 
+      content: `记住啦！你的下班时间是${time}哦！(๑•̀ㅂ•́)و✧` 
     }
   );
 };
@@ -309,16 +318,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
-  box-sizing: border-box;
+.persona-settings {
+	text-align: center;
+	margin: 10px 0;
 }
-
+.chat-container {
+  max-width: 300px;
+}
+#live2D {
+	text-align: center;
+}
 .chat-header {
   margin-bottom: 1rem;
 }
@@ -333,7 +342,7 @@ onMounted(() => {
 }
 
 .message {
-  margin-bottom: 1rem;
+  margin-top: 0.5rem !important;
   padding: 0.75rem;
   border-radius: 0.5rem;
   max-width: 80%;
@@ -342,15 +351,20 @@ onMounted(() => {
 .user-message {
   background-color: #e2f3ff;
   color: #004085;
-  margin-left: auto;
+  margin: 0 auto;
+	text-align: center;
 }
 
 .ai-message {
   background-color: #f1f1f1;
-  color: #212529;
-  margin-right: auto;
+	color: #212529;
+	margin: 0 auto;
+	text-align: center;
 }
-
+.ai-message p,.user-message p {
+  display: inline-block;
+  text-align: left;
+}
 .typing-indicator {
   display: flex;
   justify-content: center;
@@ -382,10 +396,78 @@ onMounted(() => {
     transform: scale(1);
   }
 }
+.persona-settings {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.3s ease;
+  padding: 0.75rem;
+  max-width: 80%;
+  display: flex;
+  margin: 0 auto;
+  align-items: center;
+}
 
+.persona-settings:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.persona-settings label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-right: 10px;
+  letter-spacing: 2px;
+}
+
+.persona-settings select {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: #f9fafb;
+  font-size: 14px;
+  color: #333;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  transition: all 0.2s ease;
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+
+.persona-settings select:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.persona-settings textarea {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: #f9fafb;
+  font-size: 14px;
+  color: #333;
+  resize: vertical;
+  min-height: 100px;
+  transition: all 0.2s ease;
+}
+
+.persona-settings textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
 .chat-input {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
 }
 
 .chat-input input {
@@ -394,6 +476,7 @@ onMounted(() => {
   border: 1px solid #ced4da;
   border-radius: 0.5rem;
   outline: none;
+  margin-right: 10px;
 }
 
 .chat-input button {
@@ -414,5 +497,6 @@ onMounted(() => {
   background-color: #6c757d;
   cursor: not-allowed;
 }
+
 </style>
     

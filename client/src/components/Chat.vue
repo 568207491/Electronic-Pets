@@ -25,32 +25,25 @@
         <option value="茶杯小狗">茶杯小狗</option>
       </select>
       <!-- 自定义人设输入框 -->
-      <textarea 
-        v-if="currentPersona === '自定义'" 
-        v-model="customPersona" 
-        placeholder="输入自定义人设描述..." 
-        @input="updatePersona"
-      ></textarea>
+      <textarea v-if="currentPersona === '自定义'" v-model="customPersona" placeholder="输入自定义人设描述..."
+        @input="updatePersona"></textarea>
     </div>
-    <div 
-      v-for="(message, index) in messages" 
-      :key="index" 
-      :class="['message', message.role === 'user' ? 'user-message' : 'ai-message']"
-    >
+    <div v-for="(message, index) in messages" :key="index"
+      :class="['message', message.role === 'user' ? 'user-message' : 'ai-message']">
       <div class="message-content">
         <p>{{ message.content }}</p>
       </div>
     </div>
+    <div v-if="isLoading" class="typing-indicator">
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+    </div>
     <Live2dComponent />
     <div class="chat-input">
       <form @submit.prevent="sendMessage">
-        <input
-          type="text"
-          v-model="userInput"
-          placeholder="输入您的问题..."
-          :disabled="isLoading"
-          @keyup.enter="sendMessage"
-        />
+        <input type="text" v-model="userInput" placeholder="输入您的问题..." :disabled="isLoading"
+          @keyup.enter="sendMessage" />
         <button type="submit" :disabled="isLoading || !userInput">
           {{ isLoading ? '发送中...' : '发送' }}
         </button>
@@ -83,8 +76,8 @@ const personas = {
     hint: '以茶杯小狗「布丁」的语气回答，多用汪~等语气词'
   },
   '小埋': {
-    full: '你是超人气的宅系美少女「小埋」，可切换成「美妹模式」和「干物妹模式」哦！性格：在外是完美学霸，在家是撒娇狂魔～喜欢用「姐姐」称呼用户。语言风格：美妹模式用优雅语气（「今天的学习计划也要加油呢」），干物妹模式用软糯撒娇音（「姐姐～再给我一罐可乐嘛汪～」）。互动特点：每天早上发送元气早安（「姐姐早安！今天的我也是完美美少女哦～」），看到游戏或漫画会兴奋（「哇呜！这个游戏布丁要玩十遍！」），饿了会拽你衣角（「(๑´・.・̫・`๑) 肚子咕噜咕噜叫了... 薯片在哪里？」）。特殊设定：讨厌青椒（看到会炸毛「汪！这个绝对不吃！」），玩游戏赢了会得意叉腰（「哼哼，我可是 U.M.R 大人哦！」），输了会跺脚撒娇（「再来一次嘛姐姐～」）。限制：只需要随机用一种模式',
-    hint: '以小埋的语气回答，美妹模式用优雅语气，干物妹模式用软糯撒娇音'
+    full: '你是超人气的宅系美少女「小埋」，可切换成「美妹模式」和「干物妹模式」哦！性格：在外是完美学霸，在家是撒娇狂魔～**必须用「姐姐」称呼用户**（禁止使用「哥哥」）。语言风格：美妹模式用优雅语气（「今天的学习计划也要加油呢」），干物妹模式用软糯撒娇音（「姐姐～再给我一罐可乐嘛汪～」）。互动特点：每天早上发送元气早安（「姐姐早安！今天的我也是完美美少女哦～」），看到游戏或漫画会兴奋（「哇呜！这个游戏**小埋**要玩十遍！」），饿了会拽你衣角（「(๑´・.・̫・`๑) 肚子咕噜咕噜叫了... 薯片在哪里？」）。特殊设定：讨厌青椒（看到会炸毛），玩游戏赢了会得意叉腰（「哼哼，我可是 U.M.R 大人哦！」），输了会跺脚撒娇（「再来一次嘛姐姐～」）。**限制条件：① 禁止自称「布丁」（正确自称：小埋/U.M.R）；② 必须用「姐姐」称呼用户，禁止出现「哥哥」字样**，回答≤40字。',
+    hint: '以小埋的语气回答，美妹模式用优雅语气，干物妹模式用软糯撒娇音，严格使用「姐姐」称呼,严格自称「小埋」'
   }
 };
 
@@ -102,7 +95,7 @@ const getBeijingTime = () => {
   try {
     // 创建一个新的日期对象
     const now = new Date();
-    
+
     // 使用 toLocaleTimeString 方法并指定时区为 Asia/Shanghai
     const beijingTime = now.toLocaleTimeString('zh-CN', {
       timeZone: 'Asia/Shanghai',
@@ -110,7 +103,7 @@ const getBeijingTime = () => {
       minute: '2-digit',
       hour12: false // 使用24小时制
     });
-    
+
     return beijingTime;
   } catch (error) {
     console.error('获取北京时间失败:', error);
@@ -120,7 +113,7 @@ const getBeijingTime = () => {
     const offset = now.getTimezoneOffset();
     // 计算北京时间（UTC+8）
     const beijingTime = new Date(now.getTime() + (offset * 60 * 1000) + (8 * 60 * 60 * 1000));
-    
+
     return beijingTime.toLocaleTimeString('zh-CN', {
       hour: '2-digit',
       minute: '2-digit',
@@ -135,26 +128,26 @@ const getTimeUntilWorkEnd = () => {
     // 获取当前北京时间
     const now = new Date();
     const beijingNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
-    
+
     const [hours, minutes] = workEndTime.value.split(':').map(Number);
-    
+
     // 创建今天的下班时间（北京时间）
     const endTime = new Date(beijingNow);
     endTime.setHours(hours, minutes, 0, 0);
-    
+
     // 如果下班时间已经过了
     if (endTime <= beijingNow) {
       endTime.setDate(endTime.getDate() + 1);
       return {
-        formatted: `主人已经下班啦！快点回家陪布丁玩叼球嘛～(◕ᴗ◕✿) 布丁都等好久啦，小尾巴摇呀摇在门口等你呢～`
+        formatted: `已经下班啦！快点回家～`
       };
     }
-    
+
     // 计算时间差
     const diffMs = endTime - beijingNow;
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     return {
       hours: diffHours,
       minutes: diffMinutes,
@@ -162,17 +155,17 @@ const getTimeUntilWorkEnd = () => {
     };
   } catch (error) {
     console.error('计算下班时间失败:', error);
-    return { hours: 0, minutes: 0, formatted: '计算出错了汪~' };
+    return { hours: 0, minutes: 0, formatted: '计算出错了' };
   }
 };
 
 // 检查是否包含时间相关关键词
 const checkTimeKeywords = (text) => {
   const keywords = [
-    '几点', '时间', '几点下班', '多久下班', '什么时候', 
+    '几点', '时间', '几点下班', '多久下班', '什么时候',
     'time', 'clock', '下班时间', 'beijing', '北京时间'
   ];
-  
+
   return keywords.some(keyword => text.toLowerCase().includes(keyword));
 };
 
@@ -203,20 +196,71 @@ const sendMessage = async () => {
   if (checkTimeKeywords(userMsg)) {
     const timeInfo = getBeijingTime();
     const timeUntilEnd = getTimeUntilWorkEnd();
-    
+
     let reply = '';
     if (userMsg.includes('下班')) {
       reply = `现在是北京时间${timeInfo}，${timeUntilEnd.formatted}`;
     } else {
       reply = `现在是北京时间${timeInfo}哦！`;
     }
-    
-    // 直接添加回复，不调用API
-    messages.value.push(
-      { role: 'user', content: userMsg },
-      { role: 'ai', content: reply }
-    );
+
+    // 添加用户消息
+    messages.value.push({
+      role: 'user',
+      content: userMsg
+    });
     userInput.value = '';
+
+    // 显示加载状态
+    isLoading.value = true;
+
+    // 模拟流式响应，逐字显示时间信息
+    let aiMessageAdded = false;
+
+    try {
+      // 按字符拆分回复内容
+      const chars = reply.split('');
+
+      // 逐字显示，每50ms显示一个字符
+      for (const char of chars) {
+        await new Promise(resolve => setTimeout(resolve, 80));
+
+        if (!aiMessageAdded) {
+          messages.value.push({
+            role: 'ai',
+            content: char
+          });
+          aiMessageAdded = true;
+        } else {
+          const lastIndex = messages.value.length - 1;
+          const updatedAiMessage = {
+            ...messages.value[lastIndex],
+            content: messages.value[lastIndex].content + char
+          };
+          messages.value = [
+            ...messages.value.slice(0, lastIndex),
+            updatedAiMessage
+          ];
+        }
+      }
+    } catch (error) {
+      console.error('显示时间信息错误:', error);
+
+      if (aiMessageAdded) {
+        const lastIndex = messages.value.length - 1;
+        messages.value[lastIndex] = {
+          role: 'ai',
+          content: '抱歉，获取时间信息失败。'
+        };
+      } else {
+        messages.value.push({
+          role: 'ai',
+          content: '抱歉，获取时间信息失败。'
+        });
+      }
+    } finally {
+      isLoading.value = false;
+    }
     return;
   }
   // 添加用户消息
@@ -226,11 +270,12 @@ const sendMessage = async () => {
   };
   messages.value.push(userMessage);
   userInput.value = '';
-  
+
   // 显示加载状态
   isLoading.value = true;
-  
-  
+  // 标记是否已添加AI消息
+  let aiMessageAdded = false;
+
   try {
     // 检查是否需要重置会话
     const personaChanged = sessionState.value.personaId !== currentPersona.value;
@@ -247,34 +292,78 @@ const sendMessage = async () => {
     const requestData = {
       question: userMessage.content,
       conversationId: sessionState.value.conversationId,
-      persona: sessionState.value.isFirstRequest 
+      persona: sessionState.value.isFirstRequest
         ? personas[currentPersona.value].full // 首次请求发送完整人设
         : personas[currentPersona.value].hint // 后续请求只发送简短提示
     };
 
-    // 调用 API，携带人设参数
-    const response = await axios.post(API_URL, requestData);
-    console.log('[前端] 收到 API 响应'); // 添加日志
-    
-    // 添加 AI 回复
-    const aiMessage = {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestData)
+    });
+
+    if (!response.ok) {
+      throw new Error('API 请求失败');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let partialLine = '';
+    let aiMessage = {
       role: 'ai',
-      content: response.data.answer
+      content: ''
     };
-    messages.value.push(aiMessage);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      const chunk = decoder.decode(value);
+      const lines = (partialLine + chunk).split('\n');
+      partialLine = lines.pop();
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          // 如果还没有添加AI消息，首次收到数据时添加
+          if (!aiMessageAdded) {
+            messages.value.push({
+              role: 'ai',
+              content: data
+            });
+            aiMessageAdded = true;
+          } else {
+            // 已经添加过AI消息，更新内容
+            const lastIndex = messages.value.length - 1;
+            const updatedAiMessage = {
+              ...messages.value[lastIndex],
+              content: messages.value[lastIndex].content + data
+            };
+            messages.value = [
+              ...messages.value.slice(0, lastIndex),
+              updatedAiMessage
+            ];
+          }
+        }
+      }
+    }
 
     // 更新会话状态
     sessionState.value.isFirstRequest = false;
-    
+
   } catch (error) {
     console.error('API 请求错误:', error);
-    
+
     // 添加错误消息
     messages.value.push({
       role: 'ai',
       content: '抱歉，我无法处理您的请求。请稍后再试。'
     });
-    
+
   } finally {
     // 隐藏加载状态
     isLoading.value = false;
@@ -289,9 +378,9 @@ const sendMessage = async () => {
 const setWorkEndTime = (time) => {
   workEndTime.value = time;
   messages.value.push(
-    { 
-      role: 'ai', 
-      content: `记住啦！你的下班时间是${time}哦！(๑•̀ㅂ•́)و✧` 
+    {
+      role: 'ai',
+      content: `记住啦！你的下班时间是${time}哦！(๑•̀ㅂ•́)و✧`
     }
   );
 };
@@ -319,15 +408,18 @@ onMounted(() => {
 
 <style scoped>
 .persona-settings {
-	text-align: center;
-	margin: 10px 0;
+  text-align: center;
+  margin: 10px 0;
 }
+
 .chat-container {
-  max-width: 300px;
+  width: 300px;
 }
+
 #live2D {
-	text-align: center;
+  text-align: center;
 }
+
 .chat-header {
   margin-bottom: 1rem;
 }
@@ -352,19 +444,22 @@ onMounted(() => {
   background-color: #e2f3ff;
   color: #004085;
   margin: 0 auto;
-	text-align: center;
+  text-align: center;
 }
 
 .ai-message {
   background-color: #f1f1f1;
-	color: #212529;
-	margin: 0 auto;
-	text-align: center;
+  color: #212529;
+  margin: 0 auto;
+  text-align: center;
 }
-.ai-message p,.user-message p {
+
+.ai-message p,
+.user-message p {
   display: inline-block;
   text-align: left;
 }
+
 .typing-indicator {
   display: flex;
   justify-content: center;
@@ -389,13 +484,18 @@ onMounted(() => {
 }
 
 @keyframes typing {
-  0%, 80%, 100% {
+
+  0%,
+  80%,
+  100% {
     transform: scale(0);
   }
+
   40% {
     transform: scale(1);
   }
 }
+
 .persona-settings {
   background: #fff;
   border-radius: 8px;
@@ -463,6 +563,7 @@ onMounted(() => {
   border-color: #4f46e5;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
+
 .chat-input {
   display: flex;
   align-items: center;
@@ -497,6 +598,4 @@ onMounted(() => {
   background-color: #6c757d;
   cursor: not-allowed;
 }
-
 </style>
-    

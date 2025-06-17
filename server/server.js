@@ -77,6 +77,10 @@ app.post('/api/ask', async (req, res) => {
     
     // 记录 Tokens 使用量（调试用）
     console.log('[API] 人设:', persona.length > 100,sessionPersona);
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
     
     const response = await axios.post(
       DEEPSEEK_API_URL,
@@ -90,23 +94,45 @@ app.post('/api/ask', async (req, res) => {
             { role: 'user', content: question }
         ],
         temperature,
-        max_tokens
+        max_tokens,
+        stream: true // 开启流式响应
       },
       {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
-        }
+        },
+        responseType: 'stream'
       }
     );
-    // 打印 Tokens 使用量（调试用）
-    console.log('[API] Tokens 使用量:', response.data.usage);
-    console.log('[API 响应] 成功获取 DeepSeek 回复'); // 添加日志
     
-    res.status(200).json({
-      answer: response.data.choices[0].message.content,
-      model: response.data.model,
-      usage: response.data.usage
+    response.data.on('data', (chunk) => {
+      const lines = chunk.toString().split('\n').filter(line => line.trim()!== '');
+      for (const line of lines) {
+        const data = line.replace('data: ', '');
+        if (data === '[DONE]') {
+          res.end();
+          return;
+        }
+        try {
+          const jsonData = JSON.parse(data);
+          const delta = jsonData.choices[0].delta.content;
+          if (delta) {
+            res.write(`data: ${delta}\n\n`);
+          }
+        } catch (error) {
+          console.error('解析流式数据出错:', error);
+        }
+      }
+    });
+
+    response.data.on('end', () => {
+      res.end();
+    });
+
+    response.data.on('error', (error) => {
+      console.error('DeepSeek API 流式响应错误:', error);
+      res.status(500).end('服务器内部错误，请稍后再试');
     });
     
   } catch (error) {

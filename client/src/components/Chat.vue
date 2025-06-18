@@ -19,6 +19,15 @@
     </div> -->
     <!-- 人设配置区域 -->
     <!-- 消息记录区 -->
+    <button class="history-btn" @click="openMessageHistory">
+      <i class="fa fa-history"></i> 消息记录
+    </button>
+    <MessageHistoryModal
+      :isOpen="isHistoryOpen"
+      :messages="messages"
+      @close="closeMessageHistory"
+      @clear="clearMessages"
+    />
     <div class="old-message">
       <div class="title">消息记录</div>
       <div class="old-message-box">
@@ -71,6 +80,7 @@
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import Live2dComponent from './Live2dComponent.vue';
+import MessageHistoryModal from './MessageHistoryModal.vue';
 import { eventBus } from '../utils/eventBus';
 // 状态管理
 const messages = ref([
@@ -103,7 +113,38 @@ const personas = {
     hint: ``
   }
 };
+const props = defineProps({
+  messages: {
+    type: Array,
+    required: false,
+    default: () => []
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
+  }
+});
 
+const emits = defineEmits(['clear']);
+
+// 定义控制弹窗显示的状态
+const isHistoryOpen = ref(false);
+
+// 打开消息记录
+const openMessageHistory = () => {
+  isHistoryOpen.value = true;
+};
+
+// 关闭消息记录
+const closeMessageHistory = () => {
+  isHistoryOpen.value = false;
+};
+
+// 清空消息记录
+const clearMessages = () => {
+  emits('clear');
+  closeMessageHistory();
+};
 // 会话状态管理
 const sessionState = ref({
   conversationId: null, // 会话ID

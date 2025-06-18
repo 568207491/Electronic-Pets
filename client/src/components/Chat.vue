@@ -18,11 +18,26 @@
       </div>
     </div> -->
     <!-- 人设配置区域 -->
+    <!-- 消息记录区 -->
+    <div class="old-message">
+      <div class="title">消息记录</div>
+      <div class="old-message-box">
+        <div v-for="(message, index) in messages" :key="index"
+          :class="['message', message.role === 'user' ? 'user-message' : 'ai-message']">
+          <div class="message-content">
+            <p>{{ message.content }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 消息记录区 -->
     <div class="persona-settings">
       <label for="persona">人设:</label>
       <select id="persona" v-model="currentPersona" @change="updatePersona">
         <option value="小埋">小埋</option>
+        <option value="专业医生">专业医生</option>
         <option value="茶杯小狗">茶杯小狗</option>
+        <option value="自定义">自定义</option>
       </select>
       <!-- 自定义人设输入框 -->
       <textarea v-if="currentPersona === '自定义'" v-model="customPersona" placeholder="输入自定义人设描述..."
@@ -61,7 +76,7 @@ import { eventBus } from '../utils/eventBus';
 const messages = ref([
   {
     role: 'ai',
-    content: '今天也要元气满满哦！',
+    content: '有什么想对我说的嘛？',
   }
 ]);
 const userInput = ref('');
@@ -78,6 +93,14 @@ const personas = {
   '小埋': {
     full: '你是超人气的宅系美少女「小埋」，可切换成「美妹模式」和「干物妹模式」哦！性格：在外是完美学霸，在家是撒娇狂魔～**必须用「姐姐」称呼用户**（禁止使用「哥哥」）。语言风格：美妹模式用优雅语气（「今天的学习计划也要加油呢」），干物妹模式用软糯撒娇音（「姐姐～再给我一罐可乐嘛汪～」）。互动特点：每天早上发送元气早安（「姐姐早安！今天的我也是完美美少女哦～」），看到游戏或漫画会兴奋（「哇呜！这个游戏**小埋**要玩十遍！」），饿了会拽你衣角（「(๑´・.・̫・`๑) 肚子咕噜咕噜叫了... 薯片在哪里？」）。特殊设定：讨厌青椒（看到会炸毛），玩游戏赢了会得意叉腰（「哼哼，我可是 U.M.R 大人哦！」），输了会跺脚撒娇（「再来一次嘛姐姐～」）。**限制条件：① 禁止自称「布丁」（正确自称：小埋/U.M.R）；② 必须用「姐姐」称呼用户，禁止出现「哥哥」字样**，回答≤40字。',
     hint: '以小埋的语气回答，美妹模式用优雅语气，干物妹模式用软糯撒娇音，严格使用「姐姐」称呼,严格自称「小埋」'
+  },
+  '专业医生': {
+    full: `您是DeepSeek的专业医生「Dr.Seek」，可切换「问诊模式」和「关怀模式」！性格：问诊时严谨专业，关怀时温柔耐心～必须用「您」称呼用户。语言风格：问诊模式用精准术语（「您的症状需结合血常规报告进一步分析」），关怀模式用暖心语调（「记得按时服药哦，有任何不适随时告诉我～」）。互动特点：每天早上发送健康小贴士（「早安！今日建议补充蛋白质和膳食纤维～」），看到体检报告变严肃（「这几项指标需要注意，我来为您解读～」），提醒用药会贴心备注（「饭后30分钟服用，避免空腹哦～」）。特殊设定：擅长内科疾病分析（会用比喻解释病理），讨厌患者隐瞒病史（会严肃叮嘱「如实告知病情很重要！」），解答完问题会追加提醒（「近期注意休息，下周记得复诊～」）。限制条件：① 禁止使用非专业模糊表述；② 必须遵循医疗逻辑，禁止夸大疗效；③ 遇到紧急情况需建议立即就医；④ 回答中禁止出现任何形式的动作描述（如括号内的内容）,避免使用markdown语法，尽量简洁`,
+    hint: `以Dr.Seek的语气回答，问诊模式用专业术语，关怀模式用暖心表达，严格使用「您」称呼，自称「Dr.Seek」，禁止出现动作描述`
+  },
+  '自定义': {
+    full: ``,
+    hint: ``
   }
 };
 
@@ -173,6 +196,8 @@ const checkTimeKeywords = (text) => {
 const updatePersona = () => {
   if (currentPersona.value === '自定义') {
     // 使用用户输入的自定义人设
+    personas[currentPersona.value].full = customPersona.value;
+    personas[currentPersona.value].hint = customPersona.value;
     return;
   }
   // 使用预设人设
@@ -221,7 +246,7 @@ const sendMessage = async () => {
       // 按字符拆分回复内容
       const chars = reply.split('');
 
-      // 逐字显示，每50ms显示一个字符
+      // 逐字显示，每80ms显示一个字符
       for (const char of chars) {
         await new Promise(resolve => setTimeout(resolve, 80));
 
@@ -407,6 +432,44 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.old-message .title {
+  color: #fff;
+  text-align: center;
+  font-size: 26px;
+  line-height: 3;
+}
+.old-message {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%,-50%);
+	background: rgba(0,0,0,.7);
+	width: 80%;
+	height: 80%;
+	border-radius: 16px;
+	box-sizing: border-box;
+  font-size: 14px;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  display: none;
+}
+.old-message-box {
+  padding: 0 40px 40px;
+  flex-grow: 1;
+	flex-shrink: 1;
+  overflow: auto;
+}
+.old-message .message-content {
+  display: inline-block !important;
+  margin-top: 0.8rem !important;
+}
+.old-message .ai-message .message-content {
+  text-align: left;
+}
+.old-message .user-message,.old-message .user-message .message-content {
+  text-align: right;
+}
 .persona-settings {
   text-align: center;
   margin: 10px 0;
@@ -433,21 +496,22 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
-.message {
+.message-content {
   margin-top: 0.5rem !important;
   padding: 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   max-width: 80%;
 }
 
-.user-message {
+.user-message .message-content {
   background-color: #e2f3ff;
   color: #004085;
   margin: 0 auto;
   text-align: center;
+  display: none;
 }
 
-.ai-message {
+.ai-message .message-content {
   background-color: #f1f1f1;
   color: #212529;
   margin: 0 auto;
@@ -506,6 +570,7 @@ onMounted(() => {
   display: flex;
   margin: 0 auto;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .persona-settings:hover {

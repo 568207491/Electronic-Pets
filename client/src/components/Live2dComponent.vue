@@ -18,6 +18,7 @@ export default {
       modelConfig: {
         '小埋': 'umaru',
         '茶杯小狗': 'wanko',
+        '专业医生': 'kesyoban',
       }
     }
   },
@@ -68,7 +69,9 @@ export default {
     // 监听人设变更事件
     eventBus.on('personaChanged', (persona) => {
       console.log('[Live2dComponent] 收到事件:', persona); // 添加日志
-      this.updateLive2dModel(persona);
+      if(persona !== '自定义') {
+        this.updateLive2dModel(persona);
+      }
     });
   },
   beforeUnmount() {
